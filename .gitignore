@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 /CIFAR-10
+/ckpts
