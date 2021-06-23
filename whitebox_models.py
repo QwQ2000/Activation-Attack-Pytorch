@@ -15,6 +15,5 @@ class ResNet18FeatureExtractor(nn.Module):
         x = m.layer1(x)
         x = m.layer2(x)
         x = m.layer3(x)
-        x = m.layer4(x)
-
+        #x = m.layer4(x)
         return x
