@@ -18,7 +18,7 @@ transform = Compose([
 ])
 cifar10 = CIFAR10(root = './CIFAR-10',download = True,train = False,transform = transform)
 ds = TargetedAttackCIFAR10(cifar10)
-_,ds = torch.utils.data.random_split(ds, [int(0.99 * len(ds)),len(ds) - int(0.99 * len(ds))])
+#_,ds = torch.utils.data.random_split(ds, [int(0.99 * len(ds)),len(ds) - int(0.99 * len(ds))])
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 wb_eval_model = resnet18()
@@ -52,13 +52,15 @@ def eval():
 
             f = lambda x:torch.sum(x).cpu().detach().numpy() / len(x)
             
-            wb_errors.append(f(wb_res != src_label))
-            wb_tsucs.append(f(wb_res == tgt_label))
+            wb_error = f(wb_res != src_label)
+            wb_tsuc = f(wb_res == tgt_label)
+            wb_errors.append(wb_error)
+            wb_tsucs.append(wb_tsuc)
 
             errors.append(f(tr_res != src_label))
-            utrs.append(f((tr_res != src_label) & (wb_res != src_label)))
+            utrs.append(f((tr_res != src_label) & (wb_res != src_label)) / wb_error)
             tsucs.append(f(tr_res == tgt_label))
-            ttrs.append(f((tr_res == tgt_label) & (wb_res == tgt_label)))
+            ttrs.append(f((tr_res == tgt_label) & (wb_res == tgt_label)) / wb_tsuc)
 
     mean = lambda x:np.mean(np.array(x))
     error,utr,tsuc,ttr = mean(errors),mean(utrs),mean(tsucs),mean(ttrs)
