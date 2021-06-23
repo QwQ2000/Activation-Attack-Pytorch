@@ -16,21 +16,18 @@ class AcivationAttacker(Attacker):
         self.k = k
     
     def generate(self, wb_model, src, tgt):
-        #adv = torch.Tensor(src.cpu()).to(src.device)
-        adv = src
+        adv = torch.Tensor(src.cpu()).to(src.device)
         adv.requires_grad = True
         alpha = self.eps / self.k
         momentum = torch.zeros(src.shape).to(src.device)
         criterion = nn.MSELoss().to(src.device)
 
         wb_model.train()
-        for _ in range(self.k):
-            if adv.grad is not None:
-                adv.grad.data.fill_(0)
+        for i in range(self.k):
             wb_model.zero_grad()
             loss = criterion(wb_model(adv),wb_model(tgt))
-            loss.backward()
-            momentum = momentum + adv.grad / torch.norm(adv.grad,p = 1)
+            grad = torch.autograd.grad(loss,adv,retain_graph = False,create_graph = False)[0]
+            momentum = momentum + grad / torch.norm(grad,p = 1)
             adv = torch.clip(adv - alpha * torch.sign(momentum),min = 0,max = 1)
 
         return adv

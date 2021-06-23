@@ -1,0 +1,8 @@
+torch==1.8.0
+pytorch_pretrained_vit==0.0.7
+numpy==1.18.5
+tqdm==4.47.0
+torchvision==0.8.1
+opencv_python==4.4.0.46
+scikit_learn==0.24.2
+torchsummary==1.5.1
