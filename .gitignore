@@ -130,3 +130,5 @@ dmypy.json
 
 /CIFAR-10
 /ckpts
+.vscode
+/modelzoo
