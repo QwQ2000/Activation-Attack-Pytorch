@@ -9,7 +9,7 @@ class TargetedAttackCIFAR10(Dataset):
         self.cifar10 = cifar10
     
     def __getitem__(self, idx):
-        t = randint(0,len(self.cifar10))
+        t = randint(0,len(self.cifar10) - 1)
         while self.cifar10[t][1] == self.cifar10[idx][1]:
              t = randint(0,len(self.cifar10))
         return self.cifar10[idx],self.cifar10[t]

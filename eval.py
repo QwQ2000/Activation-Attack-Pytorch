@@ -2,7 +2,7 @@ from torchvision.datasets import CIFAR10
 from dataset import TargetedAttackCIFAR10
 from torchvision.transforms import ToTensor,Resize,Compose,ToPILImage
 from attacker import AcivationAttacker
-from torchvision.models import resnet18
+from torchvision.models import resnet18,densenet121
 from pytorch_pretrained_vit import ViT
 from torch import nn
 from torch.utils.data import DataLoader
@@ -25,15 +25,25 @@ wb_eval_model = resnet18()
 wb_eval_model.fc = nn.Linear(512,10)
 wb_eval_model.to(device)
 
-ckpt = torch.load('modelzoo/resnet18.pth',map_location = lambda storage, loc: storage)
+if device == torch.device('cpu'):
+    ckpt = torch.load('modelzoo/resnet18.pth',map_location = lambda storage, loc: storage)
+else:
+    ckpt = torch.load('modelzoo/resnet18.pth')
 wb_eval_model.load_state_dict(ckpt['model'])
 
 wb_model = ResNet18FeatureExtractor(wb_eval_model)
 
-bb_model = ViT('B_16_imagenet1k',pretrained = False)
-bb_model.fc = nn.Linear(in_features = 768,out_features = 10)
+#bb_model = ViT('B_16_imagenet1k',pretrained = False)
+#bb_model.fc = nn.Linear(in_features = 768,out_features = 10)
+#bb_model = bb_model.to(device)
+#ckpt = torch.load('modelzoo/vit.pth',map_location = lambda storage, loc: storage)
+bb_model = densenet121()
+bb_model.classifier = nn.Linear(1024,10)
 bb_model = bb_model.to(device)
-ckpt = torch.load('modelzoo/vit.pth',map_location = lambda storage, loc: storage)
+if device == torch.device('cpu'):
+    ckpt = torch.load('modelzoo/densenet121.pth',map_location = lambda storage, loc: storage)
+else:
+    ckpt = torch.load('modelzoo/densenet121.pth')
 bb_model.load_state_dict(ckpt['model'])
 
 def eval():
@@ -44,10 +54,10 @@ def eval():
     wb_errors,wb_tsucs = [],[]
     
     for idx,((src_x,src_label),(tgt_x,tgt_label)) in tqdm(enumerate(loader)):
-        src_x,tgt_x = src_x.to(device),tgt_x.to(device)
+        src_x,tgt_x,src_label,tgt_label = src_x.to(device),tgt_x.to(device),src_label.to(device),tgt_label.to(device)
         adv = attacker(wb_model,src_x,tgt_x)
         with torch.no_grad():
-            tr_res = torch.argmax(bb_model(Resize(384)(adv)),dim = 1)
+            tr_res = torch.argmax(bb_model(Resize(224)(adv)),dim = 1)
             wb_res = torch.argmax(wb_eval_model(adv),dim = 1)
 
             f = lambda x:torch.sum(x).cpu().detach().numpy() / len(x)
@@ -72,18 +82,22 @@ def eval():
 def visualize(idx):
     (src_x,src_label),(tgt_x,tgt_label) = ds[idx]
     src_x,tgt_x = src_x.unsqueeze(0).to(device),tgt_x.unsqueeze(0).to(device)
-    attacker = AcivationAttacker(eps = 0.07,k = 10)
+    attacker = AcivationAttacker(eps = 0.07,k = 20)
     adv = attacker(wb_model,src_x,tgt_x)
     with torch.no_grad():
-        tr_res = nn.functional.softmax(bb_model(Resize(384)(adv)),dim = 1).detach().numpy()[0]
-        wb_res = nn.functional.softmax(wb_eval_model(adv),dim = 1).detach().numpy()[0]
+        tr_res = nn.functional.softmax(bb_model(Resize(224)(adv)),dim = 1).cpu().detach().numpy()[0]
+        wb_res = nn.functional.softmax(wb_eval_model(adv),dim = 1).cpu().detach().numpy()[0]
+    print(torch.argmax(torch.Tensor(wb_res)),torch.argmax(torch.Tensor(tr_res)))
+    if torch.argmax(torch.Tensor(tr_res)) == tgt_label and torch.argmax(torch.Tensor(wb_res)) == tgt_label:
+        print('Success targetted attack on both models.')
     trans = ToPILImage()
-    src_img,adv_img = np.array(trans(src_x[0].detach())),np.array(trans(adv[0].detach()))
+    src_img,adv_img = np.array(trans(src_x[0].cpu().detach())),np.array(trans(adv[0].cpu().detach()))
     cv2.imshow('Source Image',src_img)
     cv2.imshow('Adversarial Sample',adv_img)
-    print(tr_res,wb_res,src_label,tgt_label)
+    print('Blackbox model output probs:{}'.format(tr_res))
+    print('Whitebox model output probs:{}'.format(wb_res))
+    print('Source Label:{}    Target label:{}'.format(src_label,tgt_label))
     cv2.waitKey(0)
 
 if __name__ == '__main__':
-    #visualize(2)
     print(eval())
