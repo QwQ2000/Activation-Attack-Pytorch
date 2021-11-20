@@ -48,7 +48,7 @@ bb_model.load_state_dict(ckpt['model'])
 
 def eval():
     attacker = AcivationAttacker(eps = 0.07,k = 10)
-    loader = DataLoader(ds,batch_size = 16,shuffle = True,pin_memory = True,num_workers = 4)
+    loader = DataLoader(ds,batch_size = 16,shuffle = True,pin_memory = True,num_workers = 4,drop_last = True)
     
     errors,utrs,tsucs,ttrs = [],[],[],[]
     wb_errors,wb_tsucs = [],[]
