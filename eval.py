@@ -46,6 +46,9 @@ else:
     ckpt = torch.load('modelzoo/densenet121.pth')
 bb_model.load_state_dict(ckpt['model'])
 
+wb_model.eval()
+bb_model.eval()
+
 def eval():
     attacker = AcivationAttacker(eps = 0.07,k = 10)
     loader = DataLoader(ds,batch_size = 16,shuffle = True,pin_memory = True,num_workers = 4,drop_last = True)
@@ -68,12 +71,14 @@ def eval():
             wb_tsucs.append(wb_tsuc)
 
             errors.append(f(tr_res != src_label))
-            utrs.append(f((tr_res != src_label) & (wb_res != src_label)) / wb_error)
+            utrs.append(f((tr_res != src_label) & (wb_res != src_label)))
             tsucs.append(f(tr_res == tgt_label))
-            ttrs.append(f((tr_res == tgt_label) & (wb_res == tgt_label)) / wb_tsuc)
-
+            ttrs.append(f((tr_res == tgt_label) & (wb_res == tgt_label)))
+    
+    utr, ttr = sum(np.array(utrs)) / sum(np.array(wb_errors)), sum(np.array(ttrs)) / sum(np.array(wb_tsucs))
+    
     mean = lambda x:np.mean(np.array(x))
-    error,utr,tsuc,ttr = mean(errors),mean(utrs),mean(tsucs),mean(ttrs)
+    error,tsuc = mean(errors),mean(tsucs)
     wb_error,wb_tsuc = mean(wb_errors),mean(wb_tsucs)
 
     return error,utr,tsuc,ttr,wb_error,wb_tsuc
