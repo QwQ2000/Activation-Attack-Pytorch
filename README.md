@@ -10,13 +10,13 @@ All the models are finetuned on **CIFAR-10** with the **Adam** optimizer with **
 ## Pretrained models
 | Model Name | CIFAR-10 Test Accuracy | ImageNet-1K Pretrain |
 | :--------: | :--------------------: | :-----------------------: |
-| ResNet-18 | 0.9246 | Yes |
-| DenseNet-121 | 0.9255 | Yes |
+| ResNet-18 | 0.9435 | Yes |
+| DenseNet-121 | 0.9571 | Yes |
 | ViT-B/16 | 0.9838 | Yes |
 
 ## Results
 | Model | Error | uTr | tSuc | tTr |
 | :---: | :-----: | :-----: | :-----: | :-----: |
-| ResNet-18 | 92.88 | / | 62.56 | / |
-| DenseNet-121 | 79.94 | 80.72 | 14.97 | 17.15 |
+| ResNet-18 | 96.39 | / | 75.48 | / |
+| DenseNet-121 | 80.16 | 82.27 | 9.39 | 10.65 |
 | ViT | 22.33 | 22.78  | 2.5 | 4.2 |
